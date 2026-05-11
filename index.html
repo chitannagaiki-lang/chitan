@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ちーたんの情報共有</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;max-width:480px;margin:0 auto;padding-bottom:60px}
+.header{background:#6d28d9;padding:16px;border-radius:0 0 14px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:17px;font-weight:700;color:#fff}
+.header p{font-size:12px;color:#ede9fe;margin-top:2px}
+.header-btns{display:flex;gap:6px}
+.header button{background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:6px 10px;color:#fff;font-size:12px;cursor:pointer}
+.tabs{display:flex;border-bottom:1px solid #e2e8f0;margin:0 14px 14px}
+.tab{flex:1;padding:9px 4px;font-size:13px;background:none;border:none;border-bottom:2px solid transparent;color:#64748b;cursor:pointer}
+.tab.active{color:#6d28d9;border-bottom-color:#6d28d9;font-weight:600}
+.page{display:none;padding:0 14px}
+.page.active{display:block}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:10px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff;font-family:inherit}
+textarea{resize:vertical;min-height:70px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:13px;color:#64748b;margin-bottom:3px}
+.btn{padding:9px 16px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500;border:none;background:#6d28d9;color:#fff}
+.btn.sec{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.out{background:none;color:#6d28d9;border:1px solid #6d28d9}
+.btn.full{width:100%}
+.btn.danger{background:#fee2e2;color:#b91c1c}
+.btn:disabled{opacity:.5}
+.row{display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:flex-end}
+.sheet-bg.open{display:flex}
+.sheet{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sheet-head span{font-weight:600;font-size:16px}
+.sheet-head button{background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1}
+.att-btn{font-size:11px;padding:2px 7px;border-radius:7px;cursor:pointer;border:1px solid #e2e8f0;background:#f8fafc;color:#94a3b8}
+.att-btn.active-可{background:#dcfce7;color:#16a34a;border:none;font-weight:600}
+.att-btn.active-不可{background:#fee2e2;color:#dc2626;border:none;font-weight:600}
+.att-btn.active-調整中{background:#fef3c7;color:#d97706;border:none;font-weight:600}
+.empty{color:#94a3b8;text-align:center;margin-top:40px;font-size:14px}
+.sec-label{font-size:12px;font-weight:600;color:#6d28d9;margin-bottom:6px}
+.sec-label.past{color:#94a3b8}
+.cmt{background:#f8fafc;border-radius:8px;padding:6px 10px;margin-bottom:4px}
+.cmt .meta{font-size:11px;color:#94a3b8}
+.cmt .txt{font-size:13px;color:#334155}
+.ai-box{background:#faf5ff;border:1px solid #ede9fe;border-radius:12px;padding:14px;margin-bottom:14px}
+.err{background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:10px}
+.del{background:none;border:none;color:#fca5a5;font-size:15px;cursor:pointer}
+/* ユーザー選択画面 */
+#user-select{position:fixed;inset:0;background:#f8fafc;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px}
+#user-select-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(109,40,217,0.10);border:1px solid #ede9fe}
+#user-select-accent{width:56px;height:6px;background:#6d28d9;border-radius:3px;margin:0 auto 20px}
+#user-select h2{color:#1e293b;font-size:20px;font-weight:700;margin-bottom:4px;text-align:center}
+#user-select p{color:#94a3b8;font-size:13px;margin-bottom:22px;text-align:center}
+.user-btn{width:100%;padding:13px;background:#f8fafc;border:1.5px solid #ede9fe;border-radius:10px;font-size:15px;font-weight:600;color:#334155;cursor:pointer;margin-bottom:8px;text-align:left;transition:background 0.15s}
+.user-btn:active{background:#ede9fe;border-color:#6d28d9;color:#6d28d9}
+/* 現在ユーザー表示 */
+.current-user{font-size:12px;color:#ede9fe;margin-top:2px}
+/* 予定日付 */
+.sch-date{font-size:18px;font-weight:700;color:#6d28d9;margin-bottom:2px}
+.sch-time-loc{font-size:12px;color:#64748b;margin-bottom:6px}
+/* 付添サマリー */
+.att-summary{margin-top:8px}
+.att-row{font-size:13px;margin-bottom:3px}
+.att-label{font-weight:600;margin-right:4px}
+.att-label.可{color:#16a34a}
+.att-label.不可{color:#dc2626}
+.att-label.調整中{color:#d97706}
+</style>
+</head>
+<body>
+
+<!-- ユーザー選択画面 -->
+<div id="user-select">
+  <div id="user-select-card">
+    <div id="user-select-accent"></div>
+    <h2>ちーたんの情報共有</h2>
+    <p>ユーザーを選択</p>
+    <div id="user-btn-list"></div>
+    <p id="user-empty" style="color:#94a3b8;font-size:13px;text-align:center;display:none">メンバーが登録されていません<br>アプリを開いてメンバーを追加してください</p>
+  </div>
+</div>
+
+<div class="header">
+  <div>
+    <h1>ちーたんの情報共有</h1>
+    <div class="current-user" id="current-user-label"></div>
+  </div>
+  <div class="header-btns">
+    <button onclick="switchUser()">交代</button>
+    <button onclick="openSheet('sheet-mem')">メンバー</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('rec',this)">記録</button>
+  <button class="tab" onclick="switchTab('sch',this)">予定</button>
+  <button class="tab" onclick="switchTab('ai',this)">AI分析</button>
+</div>
+
+<div id="page-rec" class="page active">
+  <div class="row" style="justify-content:space-between;margin-bottom:12px">
+    <select id="rec-filter" onchange="renderRecs()" style="width:auto;padding:6px 8px;font-size:13px">
+      <option>すべて</option>
+      <option>症状・体調</option><option>検査結果</option><option>治療・処置</option><option>コメント</option><option>その他</option>
+    </select>
+    <button class="btn sm" onclick="openSheet('sheet-rec')">＋ 記録追加</button>
+  </div>
+  <div id="rec-list"><div class="empty">読み込み中...</div></div>
+</div>
+
+<div id="page-sch" class="page">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+    <button class="btn sm" onclick="openAddSch()">＋ 予定追加</button>
+  </div>
+  <div id="sch-list"><div class="empty">読み込み中...</div></div>
+</div>
+
+<div id="page-ai" class="page">
+  <div class="ai-box">
+    <p style="font-size:13px;color:#5b21b6;margin-bottom:6px">記録内容をAIが分析し、状況整理・アドバイスをまとめます。</p>
+    <p style="font-size:12px;color:#7c3aed;margin-bottom:12px">ボタンを押すと記録内容がコピーされ、Claude.aiが開きます。開いたページにそのまま貼り付けて送信してください。</p>
+    <button class="btn full" id="ai-btn" onclick="runAI()">AI分析をはじめる</button>
+  </div>
+  <div id="ai-err"></div>
+  <div id="ai-result"></div>
+</div>
+
+<!-- Sheet: 記録追加 -->
+<div id="sheet-rec" class="sheet-bg" onclick="bgClose(event,'sheet-rec')">
+  <div class="sheet">
+    <div class="sheet-head"><span>新しい記録</span><button onclick="closeSheet('sheet-rec')">×</button></div>
+    <div class="field"><label>記録者</label><div id="r-author-display" style="padding:8px 10px;background:#f1f5f9;border-radius:8px;font-size:14px;color:#334155"></div></div>
+    <div class="field"><label>記録日</label><input type="date" id="r-date"></div>
+    <div class="field"><label>種別</label>
+      <select id="r-type" onchange="toggleCustom()">
+        <option>症状・体調</option><option>検査結果</option><option>治療・処置</option><option>コメント</option><option>その他</option>
+      </select>
+    </div>
+    <div class="field" id="r-custom-wrap" style="display:none"><label>タイトル（必須）</label><input id="r-custom" placeholder="例：栄養状態"></div>
+    <div class="field"><label>記録内容</label><textarea id="r-content" placeholder="詳しく記録してください"></textarea></div>
+    <div class="row" style="gap:8px;margin-top:4px">
+      <button class="btn sec full" onclick="closeSheet('sheet-rec')">キャンセル</button>
+      <button class="btn full" onclick="addRec()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: 記録編集 -->
+<div id="sheet-edit" class="sheet-bg" onclick="bgClose(event,'sheet-edit')">
+  <div class="sheet">
+    <div class="sheet-head"><span>記録を編集</span><button onclick="closeSheet('sheet-edit')">×</button></div>
+    <div class="field"><label>記録日</label><input type="date" id="e-date"></div>
+    <div class="field"><label>種別</label>
+      <select id="e-type" onchange="toggleEditCustom()">
+        <option>症状・体調</option><option>検査結果</option><option>治療・処置</option><option>コメント</option><option>その他</option>
+      </select>
+    </div>
+    <div class="field" id="e-custom-wrap" style="display:none"><label>タイトル（必須）</label><input id="e-custom"></div>
+    <div class="field"><label>記録内容</label><textarea id="e-content"></textarea></div>
+    <div class="row" style="gap:8px;margin-top:4px">
+      <button class="btn sec full" onclick="closeSheet('sheet-edit')">キャンセル</button>
+      <button class="btn full" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: コメント -->
+<div id="sheet-cmt" class="sheet-bg" onclick="bgClose(event,'sheet-cmt')">
+  <div class="sheet">
+    <div class="sheet-head"><span>コメントを追加</span><button onclick="closeSheet('sheet-cmt')">×</button></div>
+    <div class="field"><label>あなたの名前</label><div id="c-author-display" style="padding:8px 10px;background:#f1f5f9;border-radius:8px;font-size:14px;color:#334155"></div></div>
+    <div class="field"><label>コメント</label><textarea id="c-text" placeholder="コメントを入力"></textarea></div>
+    <div class="row" style="gap:8px;margin-top:4px">
+      <button class="btn sec full" onclick="closeSheet('sheet-cmt')">キャンセル</button>
+      <button class="btn full" onclick="addCmt()">投稿</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: 予定追加 -->
+<div id="sheet-sch" class="sheet-bg" onclick="bgClose(event,'sheet-sch')">
+  <div class="sheet">
+    <div class="sheet-head"><span>予定を追加</span><button onclick="closeSheet('sheet-sch')">×</button></div>
+    <div class="field"><label>タイトル</label><input id="s-title" placeholder="例：CT検査"></div>
+    <div class="field"><label>日付</label><input type="date" id="s-date"></div>
+    <div class="row">
+      <div class="field" style="flex:1"><label>時間（任意）</label><input type="time" id="s-time"></div>
+      <div class="field" style="flex:1"><label>場所（任意）</label><input id="s-loc" placeholder="病院名など"></div>
+    </div>
+    <div class="field"><label>メモ（任意）</label><textarea id="s-note" placeholder="準備物など" style="min-height:50px"></textarea></div>
+    <div id="s-att-wrap"></div>
+    <div class="field"><label>確定した付添メンバー（任意）</label><input id="s-confirmed" placeholder="例：母、長女"></div>
+    <div class="row" style="gap:8px;margin-top:4px">
+      <button class="btn sec full" onclick="closeSheet('sheet-sch')">キャンセル</button>
+      <button class="btn full" onclick="addSch()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sheet: メンバー -->
+<div id="sheet-mem" class="sheet-bg" onclick="bgClose(event,'sheet-mem')">
+  <div class="sheet">
+    <div class="sheet-head"><span>家族メンバー管理</span><button onclick="closeSheet('sheet-mem')">×</button></div>
+    <div class="row" style="margin-bottom:10px">
+      <input id="m-name" placeholder="名前を入力" style="flex:1" onkeydown="if(event.key==='Enter')addMember()">
+      <button class="btn out sm" onclick="addMember()">追加</button>
+    </div>
+    <div id="mem-list"></div>
+    <button class="btn full" style="margin-top:8px" onclick="closeSheet('sheet-mem')">閉じる</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCju-Ka-0Ol4rJbNmx_AW7NdXVIwDvGLlk",
+  authDomain: "chitan-chiryou.firebaseapp.com",
+  projectId: "chitan-chiryou",
+  storageBucket: "chitan-chiryou.firebasestorage.app",
+  messagingSenderId: "451335783530",
+  appId: "1:451335783530:web:55b1fa21c080a57dc17613"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const recsRef = collection(db, "records");
+const schsRef = collection(db, "schedules");
+const memsRef = doc(db, "config", "members");
+
+onSnapshot(query(recsRef, orderBy("date","desc")), snap => {
+  window.recs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  renderRecs();
+});
+onSnapshot(query(schsRef, orderBy("date","asc")), snap => {
+  window.schs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  renderSchs();
+});
+onSnapshot(memsRef, snap => {
+  window.members = snap.exists() ? (snap.data().list || []) : [];
+  renderMems();
+  renderUserSelect();
+});
+
+window.fbAddRec = async (data) => await addDoc(recsRef, data);
+window.fbDelRec = async (id) => await deleteDoc(doc(db, "records", id));
+window.fbUpdateRec = async (id, data) => await updateDoc(doc(db, "records", id), data);
+window.fbAddSch = async (data) => await addDoc(schsRef, data);
+window.fbDelSch = async (id) => await deleteDoc(doc(db, "schedules", id));
+window.fbUpdateSch = async (id, data) => await updateDoc(doc(db, "schedules", id), data);
+window.fbSaveMems = async (list) => await setDoc(memsRef, {list});
+</script>
+
+<script>
+var recs=[], schs=[], members=[], cmtTarget=null, schAttForm=[], editTarget=null;
+window.recs=recs; window.schs=schs; window.members=members;
+var currentUser = null;
+
+var TYPE_COLOR={"症状・体調":["#fef3c7","#92400e"],"検査結果":["#dbeafe","#1e40af"],"治療・処置":["#ede9fe","#5b21b6"],"コメント":["#f0fdf4","#166534"],"その他":["#f1f5f9","#475569"]};
+var ATT_OPT=["可","不可","調整中"];
+
+document.getElementById("r-date").value = new Date().toISOString().slice(0,10);
+
+// ===== ユーザー選択 =====
+function renderUserSelect(){
+  var list=document.getElementById('user-btn-list');
+  var empty=document.getElementById('user-empty');
+  var mem=window.members||[];
+  empty.style.display='none';
+  list.innerHTML=mem.map(function(m){
+    return '<button class="user-btn" onclick="selectUser(\''+esc(m)+'\')">'+esc(m)+'</button>';
+  }).join('')+
+  '<div style="border-top:1px solid #f1f5f9;margin:10px 0"></div>'+
+  '<button class="user-btn" style="color:#6d28d9;border-color:#c4b5fd" onclick="showNewUser()">＋ 新規ユーザー</button>'+
+  '<div id="new-user-form" style="display:none;margin-top:6px">'+
+    '<input id="new-user-name" placeholder="お名前を入力してください" style="width:100%;padding:10px;border:1.5px solid #c4b5fd;border-radius:10px;font-size:14px;margin-bottom:8px">'+
+    '<button class="btn full" onclick="registerNewUser()">登録してはじめる</button>'+
+  '</div>';
+}
+
+function showNewUser(){
+  var form=document.getElementById('new-user-form');
+  if(form){form.style.display='block';document.getElementById('new-user-name').focus();}
+}
+
+async function registerNewUser(){
+  var name=document.getElementById('new-user-name').value.trim();
+  if(!name){alert('お名前を入力してください');return;}
+  if((window.members||[]).includes(name)){selectUser(name);return;}
+  await window.fbSaveMems([...(window.members||[]),name]);
+  selectUser(name);
+}
+
+function selectUser(name){
+  currentUser=name;
+  document.getElementById('user-select').style.display='none';
+  document.getElementById('current-user-label').textContent='ログイン中：'+name;
+  renderRecs();
+  renderSchs();
+}
+
+function switchUser(){
+  document.getElementById('user-select').style.display='flex';
+}
+
+// ===== タブ =====
+function switchTab(id,el){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+function openSheet(id){
+  if(id==='sheet-rec'){
+    document.getElementById('r-author-display').textContent=currentUser||'未選択';
+  }
+  if(id==='sheet-cmt'){
+    document.getElementById('c-author-display').textContent=currentUser||'未選択';
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeSheet(id){document.getElementById(id).classList.remove('open');}
+function bgClose(e,id){if(e.target===document.getElementById(id))closeSheet(id);}
+
+function toggleCustom(){
+  document.getElementById('r-custom-wrap').style.display=document.getElementById('r-type').value==='その他'?'block':'none';
+}
+function toggleEditCustom(){
+  document.getElementById('e-custom-wrap').style.display=document.getElementById('e-type').value==='その他'?'block':'none';
+}
+
+// ===== 記録 =====
+async function addRec(){
+  if(!currentUser){alert('先にユーザーを選択してください');return;}
+  var date=document.getElementById('r-date').value;
+  var type=document.getElementById('r-type').value;
+  var custom=document.getElementById('r-custom').value.trim();
+  var content=document.getElementById('r-content').value.trim();
+  if(!content){alert('記録内容を入力してください');return;}
+  if(type==='その他'&&!custom){alert('タイトルを入力してください');return;}
+  await window.fbAddRec({author:currentUser,date,type,customTitle:custom,content,comments:[],createdAt:Date.now()});
+  closeSheet('sheet-rec');
+  document.getElementById('r-content').value='';
+  document.getElementById('r-custom').value='';
+  document.getElementById('r-type').value='症状・体調';
+  toggleCustom();
+}
+
+function openEdit(id){
+  var rec=(window.recs||[]).find(function(r){return r.id===id;});
+  if(!rec)return;
+  if(rec.author!==currentUser){alert('この記録は'+rec.author+'さんのみ編集できます');return;}
+  editTarget=id;
+  document.getElementById('e-date').value=rec.date;
+  document.getElementById('e-type').value=rec.type;
+  document.getElementById('e-custom').value=rec.customTitle||'';
+  document.getElementById('e-content').value=rec.content;
+  toggleEditCustom();
+  openSheet('sheet-edit');
+}
+
+async function saveEdit(){
+  if(!editTarget)return;
+  var date=document.getElementById('e-date').value;
+  var type=document.getElementById('e-type').value;
+  var custom=document.getElementById('e-custom').value.trim();
+  var content=document.getElementById('e-content').value.trim();
+  if(!content){alert('記録内容を入力してください');return;}
+  if(type==='その他'&&!custom){alert('タイトルを入力してください');return;}
+  await window.fbUpdateRec(editTarget,{date,type,customTitle:custom,content});
+  closeSheet('sheet-edit');
+  editTarget=null;
+}
+
+function renderRecs(){
+  var filter=document.getElementById('rec-filter').value;
+  var list=window.recs||[];
+  if(filter!=='すべて')list=list.filter(function(r){return r.type===filter;});
+  var el=document.getElementById('rec-list');
+  if(!list.length){el.innerHTML='<p class="empty">記録がありません</p>';return;}
+  el.innerHTML=list.map(function(r){
+    var c=TYPE_COLOR[r.type]||["#f1f5f9","#475569"];
+    var label=r.type==='その他'&&r.customTitle?r.customTitle:r.type;
+    var isOwner=(r.author===currentUser);
+    var cmts=(r.comments||[]).map(function(c){
+      return '<div class="cmt"><div class="meta">'+esc(c.author)+' · '+esc(c.date)+'</div><div class="txt">'+esc(c.text)+'</div></div>';
+    }).join('');
+    return '<div class="card">'+
+      '<div class="row" style="justify-content:space-between;margin-bottom:6px">'+
+        '<div class="row" style="flex-wrap:wrap;gap:4px">'+
+          '<span class="badge" style="background:'+c[0]+';color:'+c[1]+'">'+esc(label)+'</span>'+
+          '<span style="font-size:12px;color:#94a3b8">'+esc(r.date)+'</span>'+
+        '</div>'+
+        '<div class="row" style="gap:4px">'+
+          (isOwner?'<button class="btn sm sec" onclick="openEdit(\''+r.id+'\')">編集</button>':'')+
+          (isOwner?'<button class="del" onclick="delRec(\''+r.id+'\')">🗑</button>':'')+
+        '</div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:#94a3b8;margin-bottom:4px">記録者：<span style="color:#475569;font-weight:500">'+esc(r.author)+'</span></div>'+
+      '<p style="font-size:14px;color:#1e293b;margin:6px 0">'+esc(r.content)+'</p>'+
+      cmts+
+      '<button onclick="openCmt(\''+r.id+'\')" style="margin-top:6px;font-size:12px;color:#6d28d9;background:none;border:none;cursor:pointer">コメント追加</button>'+
+    '</div>';
+  }).join('');
+}
+
+async function delRec(id){
+  var rec=(window.recs||[]).find(function(r){return r.id===id;});
+  if(!rec)return;
+  if(rec.author!==currentUser){alert('この記録は'+rec.author+'さんのみ削除できます');return;}
+  if(confirm('削除しますか？'))await window.fbDelRec(id);
+}
+
+function openCmt(id){cmtTarget=id;openSheet('sheet-cmt');}
+async function addCmt(){
+  if(!currentUser){alert('先にユーザーを選択してください');return;}
+  var text=document.getElementById('c-text').value.trim();
+  if(!text){alert('コメントを入力してください');return;}
+  var rec=(window.recs||[]).find(function(r){return r.id===cmtTarget;});
+  if(!rec)return;
+  var comments=(rec.comments||[]).concat([{author:currentUser,text,date:new Date().toISOString().slice(0,10)}]);
+  await window.fbUpdateRec(cmtTarget,{comments});
+  closeSheet('sheet-cmt');
+  document.getElementById('c-text').value='';
+}
+
+// ===== 予定 =====
+function openAddSch(){
+  schAttForm=(window.members||[]).map(function(m){return{name:m,status:'調整中'};});
+  renderSchAttForm();
+  ['s-title','s-loc','s-note','s-confirmed'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('s-date').value='';
+  document.getElementById('s-time').value='';
+  openSheet('sheet-sch');
+}
+
+function renderSchAttForm(){
+  var wrap=document.getElementById('s-att-wrap');
+  if(!schAttForm.length){wrap.innerHTML='';return;}
+  wrap.innerHTML='<div class="field"><label>付添可否</label>'+
+    schAttForm.map(function(a,i){
+      return '<div class="row" style="justify-content:space-between;margin-bottom:5px">'+
+        '<span style="font-size:13px;color:#334155">'+esc(a.name)+'</span>'+
+        '<div class="row">'+ATT_OPT.map(function(o){
+          return '<button class="att-btn'+(a.status===o?' active-'+o:'')+'" onclick="setSchAtt('+i+',\''+o+'\')">'+o+'</button>';
+        }).join('')+'</div></div>';
+    }).join('')+'</div>';
+}
+function setSchAtt(i,st){schAttForm[i].status=st;renderSchAttForm();}
+
+async function addSch(){
+  var title=document.getElementById('s-title').value.trim();
+  var date=document.getElementById('s-date').value;
+  if(!title||!date){alert('タイトルと日付を入力してください');return;}
+  await window.fbAddSch({
+    title,date,
+    time:document.getElementById('s-time').value,
+    location:document.getElementById('s-loc').value,
+    note:document.getElementById('s-note').value,
+    confirmed:document.getElementById('s-confirmed').value,
+    attendees:schAttForm.slice()
+  });
+  closeSheet('sheet-sch');
+}
+
+function renderSchs(){
+  var td=new Date().toISOString().slice(0,10);
+  var list=window.schs||[];
+  var up=list.filter(function(s){return s.date>=td;});
+  var ps=list.filter(function(s){return s.date<td;});
+  var el=document.getElementById('sch-list');
+  if(!list.length){el.innerHTML='<p class="empty">予定がありません</p>';return;}
+  var html='';
+  if(up.length)html+='<div class="sec-label">今後の予定</div>'+up.map(schCard).join('');
+  if(ps.length)html+='<div class="sec-label past" style="margin-top:8px">過去の予定</div>'+ps.map(schCard).join('');
+  el.innerHTML=html;
+}
+
+function schCard(s){
+  // 付添可否サマリー
+  var attGroups={"可":[],"不可":[],"調整中":[]};
+  (s.attendees||[]).forEach(function(a){if(attGroups[a.status])attGroups[a.status].push(a.name);});
+  // 自分の付添ボタン
+  var myIdx=(s.attendees||[]).findIndex(function(a){return a.name===currentUser;});
+  var myAttBtns='';
+  if(myIdx>=0){
+    var myStatus=(s.attendees||[])[myIdx].status;
+    myAttBtns='<div style="margin-top:8px">'+
+      '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px">あなたの付添可否</div>'+
+      '<div class="row">'+ATT_OPT.map(function(o){
+        return '<button class="att-btn'+(myStatus===o?' active-'+o:'')+'" onclick="updAtt(\''+s.id+'\','+myIdx+',\''+o+'\')">'+o+'</button>';
+      }).join('')+'</div></div>';
+  }
+  // 付添サマリー
+  var attSummary='<div class="att-summary">';
+  ATT_OPT.forEach(function(opt){
+    if(attGroups[opt].length){
+      attSummary+='<div class="att-row"><span class="att-label '+opt+'">'+opt+'：</span><span style="font-size:13px;color:#334155">'+attGroups[opt].map(esc).join('、')+'</span></div>';
+    }
+  });
+  attSummary+='</div>';
+
+  return '<div class="card">'+
+    '<div class="row" style="justify-content:space-between;align-items:flex-start">'+
+      '<div style="flex:1">'+
+        '<div class="sch-date">'+esc(s.date)+'</div>'+
+        '<div style="font-weight:600;font-size:15px;color:#1e293b">'+esc(s.title)+'</div>'+
+        '<div class="sch-time-loc">'+(s.time?esc(s.time):'')+( s.time&&s.location?' ／ ':'' )+(s.location?'場所：'+esc(s.location):'')+'</div>'+
+      '</div>'+
+      '<button class="del" onclick="delSch(\''+s.id+'\')">🗑</button>'+
+    '</div>'+
+    (s.note?'<p style="font-size:13px;color:#475569;margin:4px 0 6px">'+esc(s.note)+'</p>':'')+
+    ((s.attendees&&s.attendees.length)?attSummary:'')+
+    myAttBtns+
+    '<div style="margin-top:8px;border-top:1px solid #f1f5f9;padding-top:8px">'+
+      '<div style="font-size:11px;color:#94a3b8;margin-bottom:3px">確定した付添メンバー</div>'+
+      '<div class="row" style="justify-content:space-between" id="cv-'+s.id+'">'+
+        '<span style="font-size:13px;color:'+(s.confirmed?'#1e293b':'#94a3b8')+'">'+esc(s.confirmed||'未入力')+'</span>'+
+        '<button onclick="editConf(\''+s.id+'\')" style="font-size:12px;color:#6d28d9;background:none;border:none;cursor:pointer">編集</button>'+
+      '</div>'+
+      '<div style="display:none" id="ce-'+s.id+'" class="row">'+
+        '<input id="cval-'+s.id+'" value="'+esc(s.confirmed||'')+'" placeholder="例：母、長女" style="flex:1;padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px">'+
+        '<button class="btn sm" onclick="saveConf(\''+s.id+'\')">保存</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function editConf(id){
+  document.getElementById('cv-'+id).style.display='none';
+  document.getElementById('ce-'+id).style.display='flex';
+}
+async function saveConf(id){
+  var v=document.getElementById('cval-'+id).value;
+  await window.fbUpdateSch(id,{confirmed:v});
+}
+async function updAtt(sid,i,st){
+  var s=(window.schs||[]).find(function(x){return x.id===sid;});
+  if(!s)return;
+  var a=s.attendees.slice();a[i]=Object.assign({},a[i],{status:st});
+  await window.fbUpdateSch(sid,{attendees:a});
+}
+async function delSch(id){if(confirm('削除しますか？'))await window.fbDelSch(id);}
+
+// ===== メンバー =====
+function addMember(){
+  var n=document.getElementById('m-name').value.trim();
+  if(!n||(window.members||[]).includes(n))return;
+  window.fbSaveMems([...(window.members||[]),n]);
+  document.getElementById('m-name').value='';
+}
+function delMember(m){
+  if(confirm(m+'を削除しますか？'))window.fbSaveMems((window.members||[]).filter(function(x){return x!==m;}));
+}
+function renderMems(){
+  var el=document.getElementById('mem-list');
+  var mem=window.members||[];
+  if(!mem.length){el.innerHTML='<p style="color:#94a3b8;font-size:13px;text-align:center">メンバーが登録されていません</p>';return;}
+  el.innerHTML=mem.map(function(m){
+    return '<div class="row" style="justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;margin-bottom:6px">'+
+      '<span style="font-size:14px;color:#334155">'+esc(m)+'</span>'+
+      '<button onclick="delMember(\''+esc(m)+'\')" style="background:none;border:none;color:#e11d48;font-size:13px;cursor:pointer">削除</button>'+
+    '</div>';
+  }).join('');
+}
+
+// ===== AI =====
+async function runAI(){
+  var recs=window.recs||[];
+  if(!recs.length){
+    document.getElementById('ai-err').innerHTML='<div class="err">記録がありません。記録タブで情報を追加してください。</div>';
+    return;
+  }
+  var prompt='以下はちーたん（患者）の医療記録です。①現在の状況まとめ ②検査・治療の経過 ③注目すべきポイント ④家族へのアドバイス の4項目で分析してください。\n\n';
+  prompt+=recs.slice(0,20).map(function(r){
+    return '['+r.date+'] '+(r.type==='その他'&&r.customTitle?r.customTitle:r.type)+'('+r.author+'): '+r.content;
+  }).join('\n');
+  try{
+    await navigator.clipboard.writeText(prompt);
+    document.getElementById('ai-result').innerHTML=
+      '<div class="card" style="border-color:#c4b5fd">'+
+        '<div style="font-weight:600;font-size:14px;color:#6d28d9;margin-bottom:8px">記録内容をコピーしました</div>'+
+        '<p style="font-size:13px;color:#334155;margin-bottom:12px">次の手順でAI分析を行ってください：</p>'+
+        '<div style="font-size:13px;color:#334155;line-height:2">'+
+          '<div>① 下のボタンをタップしてClaude.aiを開く</div>'+
+          '<div>② 入力欄を長押しして「貼り付け」を選ぶ</div>'+
+          '<div>③ 送信ボタンを押す</div>'+
+        '</div>'+
+        '<a href="https://claude.ai" target="_blank" class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px">Claude.aiを開く</a>'+
+      '</div>';
+  }catch(e){
+    document.getElementById('ai-result').innerHTML=
+      '<div class="card" style="border-color:#c4b5fd">'+
+        '<div style="font-weight:600;font-size:14px;color:#6d28d9;margin-bottom:8px">以下の文章をコピーしてClaude.aiに貼り付けてください</div>'+
+        '<textarea style="width:100%;height:120px;font-size:12px;color:#334155;border:1px solid #e2e8f0;border-radius:8px;padding:8px" readonly>'+esc(prompt)+'</textarea>'+
+        '<a href="https://claude.ai" target="_blank" class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:10px">Claude.aiを開く</a>'+
+      '</div>';
+  }
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>
