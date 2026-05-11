@@ -34,7 +34,7 @@ exports.handler = async (event) => {
         model: 'claude-sonnet-4-5',
         max_tokens: 800,
         system: '家族が共有する患者の医療記録を分析し、①現在の状況まとめ ②検査・治療の経過 ③注目すべきポイント ④家族へのアドバイス の4項目で簡潔にまとめてください。末尾に「※診断・治療方針は必ず医師にご相談ください」と添えてください。',
-        messages: [{ role: 'user', content: '以下の記録を分析してください：\n' + text }]
+        messages: [{ role: 'user', content: '以下は「ちーたん」という患者の医療記録です。記録者は家族のメンバーです。分析してください：\n' + text }]
       })
     });
 
