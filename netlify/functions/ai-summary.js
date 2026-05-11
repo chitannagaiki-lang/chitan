@@ -13,11 +13,21 @@ exports.handler = async (event) => {
 
   try {
     const { text } = JSON.parse(event.body);
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+
+    if (!apiKey) {
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ result: 'エラー：APIキーが設定されていません' })
+      };
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
@@ -29,9 +39,18 @@ exports.handler = async (event) => {
     });
 
     const data = await response.json();
+
+    if (data.error) {
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ result: 'APIエラー：' + data.error.message })
+      };
+    }
+
     const result = data.content && data.content.length > 0
       ? data.content.map(b => b.text || '').join('')
-      : '分析結果を取得できませんでした。';
+      : 'レスポンスが空でした。ステータス：' + response.status;
 
     return {
       statusCode: 200,
@@ -41,11 +60,12 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({ result })
     };
+
   } catch (e) {
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: e.message, result: 'エラーが発生しました：' + e.message })
+      body: JSON.stringify({ result: 'エラー詳細：' + e.message })
     };
   }
 };
