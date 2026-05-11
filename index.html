@@ -589,7 +589,7 @@ async function runAI(){
       '<p style="font-size:11px;color:#94a3b8;margin-bottom:10px">情報整理のサポートです。医療判断は医師にご相談ください。</p>'+
       text.split('\n').map(function(l){
         if(!l.trim())return '<div style="height:5px"></div>';
-        if(l.match(/^[①②③④]|^##/))return '<div style="font-weight:600;font-size:14px;color:#1e293b;margin:10px 0 4px">'+esc(l.replace(/^#+\s*/,''))+'</div>';
+       if(l.match(/^[①②③④]|^##|\*\*/))return '<div style="font-weight:700;font-size:14px;color:#6d28d9;margin:12px 0 4px;padding-left:8px;border-left:3px solid #6d28d9">'+esc(l.replace(/^#+\s*/,'').replace(/\*\*/g,''))+'</div>';
         if(l.startsWith('- '))return '<div style="font-size:13px;color:#334155;padding-left:12px;margin-bottom:3px">• '+esc(l.slice(2))+'</div>';
         return '<div style="font-size:13px;color:#334155;margin-bottom:3px">'+esc(l)+'</div>';
       }).join('')+'</div>';
