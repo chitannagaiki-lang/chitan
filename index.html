@@ -122,9 +122,8 @@ textarea{resize:vertical;min-height:70px}
 
 <div id="page-ai" class="page">
   <div class="ai-box">
-    <p style="font-size:13px;color:#5b21b6;margin-bottom:6px">記録内容をAIが分析し、状況整理・アドバイスをまとめます。</p>
-    <p style="font-size:12px;color:#7c3aed;margin-bottom:12px">ボタンを押すと記録内容がコピーされ、Claude.aiが開きます。開いたページにそのまま貼り付けて送信してください。</p>
-    <button class="btn full" id="ai-btn" onclick="runAI()">AI分析をはじめる</button>
+    <p style="font-size:13px;color:#5b21b6;margin-bottom:10px">記録内容をAIが自動分析し、状況整理・アドバイスをまとめます。</p>
+    <button class="btn full" id="ai-btn" onclick="runAI()">AIサマリーを生成</button>
   </div>
   <div id="ai-err"></div>
   <div id="ai-result"></div>
@@ -574,35 +573,32 @@ function renderMems(){
 // ===== AI =====
 async function runAI(){
   var recs=window.recs||[];
-  if(!recs.length){
-    document.getElementById('ai-err').innerHTML='<div class="err">記録がありません。記録タブで情報を追加してください。</div>';
-    return;
-  }
-  var prompt='以下はちーたん（患者）の医療記録です。①現在の状況まとめ ②検査・治療の経過 ③注目すべきポイント ④家族へのアドバイス の4項目で分析してください。\n\n';
-  prompt+=recs.slice(0,20).map(function(r){
+  if(!recs.length){document.getElementById('ai-err').innerHTML='<div class="err">記録がありません。</div>';return;}
+  document.getElementById('ai-btn').disabled=true;
+  document.getElementById('ai-btn').textContent='分析中...';
+  document.getElementById('ai-err').innerHTML='';
+  document.getElementById('ai-result').innerHTML='<p style="text-align:center;color:#6d28d9;font-size:14px;margin-top:20px">AIが分析しています…</p>';
+  var txt=recs.slice(0,20).map(function(r){
     return '['+r.date+'] '+(r.type==='その他'&&r.customTitle?r.customTitle:r.type)+'('+r.author+'): '+r.content;
   }).join('\n');
   try{
-    await navigator.clipboard.writeText(prompt);
-    document.getElementById('ai-result').innerHTML=
-      '<div class="card" style="border-color:#c4b5fd">'+
-        '<div style="font-weight:600;font-size:14px;color:#6d28d9;margin-bottom:8px">記録内容をコピーしました</div>'+
-        '<p style="font-size:13px;color:#334155;margin-bottom:12px">次の手順でAI分析を行ってください：</p>'+
-        '<div style="font-size:13px;color:#334155;line-height:2">'+
-          '<div>① 下のボタンをタップしてClaude.aiを開く</div>'+
-          '<div>② 入力欄を長押しして「貼り付け」を選ぶ</div>'+
-          '<div>③ 送信ボタンを押す</div>'+
-        '</div>'+
-        '<a href="https://claude.ai" target="_blank" class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:14px">Claude.aiを開く</a>'+
-      '</div>';
+    var res=await fetch('/.netlify/functions/ai-summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt})});
+    var data=await res.json();
+    var text=data.result||'';
+    document.getElementById('ai-result').innerHTML='<div class="card">'+
+      '<p style="font-size:11px;color:#94a3b8;margin-bottom:10px">情報整理のサポートです。医療判断は医師にご相談ください。</p>'+
+      text.split('\n').map(function(l){
+        if(!l.trim())return '<div style="height:5px"></div>';
+        if(l.match(/^[①②③④]|^##/))return '<div style="font-weight:600;font-size:14px;color:#1e293b;margin:10px 0 4px">'+esc(l.replace(/^#+\s*/,''))+'</div>';
+        if(l.startsWith('- '))return '<div style="font-size:13px;color:#334155;padding-left:12px;margin-bottom:3px">• '+esc(l.slice(2))+'</div>';
+        return '<div style="font-size:13px;color:#334155;margin-bottom:3px">'+esc(l)+'</div>';
+      }).join('')+'</div>';
   }catch(e){
-    document.getElementById('ai-result').innerHTML=
-      '<div class="card" style="border-color:#c4b5fd">'+
-        '<div style="font-weight:600;font-size:14px;color:#6d28d9;margin-bottom:8px">以下の文章をコピーしてClaude.aiに貼り付けてください</div>'+
-        '<textarea style="width:100%;height:120px;font-size:12px;color:#334155;border:1px solid #e2e8f0;border-radius:8px;padding:8px" readonly>'+esc(prompt)+'</textarea>'+
-        '<a href="https://claude.ai" target="_blank" class="btn full" style="display:block;text-align:center;text-decoration:none;margin-top:10px">Claude.aiを開く</a>'+
-      '</div>';
+    document.getElementById('ai-err').innerHTML='<div class="err">AIの呼び出しに失敗しました。再試行してください。</div>';
+    document.getElementById('ai-result').innerHTML='';
   }
+  document.getElementById('ai-btn').disabled=false;
+  document.getElementById('ai-btn').textContent='AIサマリーを生成';
 }
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
